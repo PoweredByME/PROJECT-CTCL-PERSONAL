@@ -11,12 +11,12 @@ cam = 0;
 def getCamera():
     global cam;
     cam = cv2.VideoCapture(0);
-    
+#end
+   
 #   Function gets the video frames from the already 
 #   accessed camera.
 #   -------------------------------------------------
 #   OUTPUT : Raw Image Matrix
-
 def getFrame():
     global cam;
     ret_val, img = cam.read();
@@ -24,3 +24,4 @@ def getFrame():
         return img
     else:
         helper.throwException("visual_input.py -> def getFrame -> ERROR : Frame is not accessed.");
+#end
