@@ -10,7 +10,9 @@ cam = 0;
 #   Function gets access of the camera.
 def getCamera():
     global cam;
-    cam = cv2.VideoCapture(0);
+    cam = cv2.VideoCapture("experimentalVideos/vid2.mp4");
+    #cam = cv2.VideoCapture("experimentalVideos/vid2.mp4");
+    #cam = cv2.VideoCapture(0);
 #end
    
 #   Function gets the video frames from the already 
