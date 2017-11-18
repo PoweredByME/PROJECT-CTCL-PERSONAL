@@ -5,6 +5,26 @@
 # - Saad Ahmad -                                                  #
 ###################################################################
 
+
+
+
+####################################################################
+############################# NOTES ################################
+# - Tried Canny edges detection with adaptive filtering on the image 
+#   and then some average blurring to detect the cell. It was OK but
+#   not good and especially not robust.
+# - Tried blob detection and it was a perfect fail.
+# - Tried Simple Template Matching it is really good and very robust
+#   -------- I will now try some tweeks like store the template on 
+#            successive frame and use it. I will see it results.
+#   -------- I will use multiple template matching.
+#   -------- I will use keypoint detection.
+#   -------- I will use keypoint matching with template mateching
+#            (hope this one is the best).
+####################################################################
+
+
+
 # -*- coding: utf-8 -*-
 
 # imports
