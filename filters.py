@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # imports
-import cv2, helper;
+import cv2, helper, imutils;
 import numpy as np;
 
 # This filter does the average filtering on the image
@@ -63,3 +63,29 @@ def laplacian(frame):
     return cv2.Laplacian(frame, cv2.CV_32F, 5,5);
 #end
 
+
+
+
+
+
+
+
+# This function apply the primary transforms and
+# filtering on the captured frames
+def applyPrimaryFilteringOnImage(frame, resize_width = 400, canny_min = 90, canny_max = 200, last_thresh_min = 68, last_thresh_max = 255):
+    resizedFrameWidth = resize_width;
+    cannyEdgeDetector_minVal = canny_min;
+    cannyEdgeDetector_maxVal = canny_max;
+
+    orignal = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY);
+    r_orignal = imutils.resize(orignal, width=resizedFrameWidth);
+    resize_ratio = orignal.shape[0]/float(r_orignal.shape[0]);
+    orignal = r_orignal;
+    orignal = gaussianBlur(orignal);
+    orignal = cv2.adaptiveThreshold(orignal,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,2)
+    processedframe = cv2.Canny(gaussianBlur(orignal),180,200);
+    orignal = processedframe1 = avgFilter(processedframe, (29,29));
+    ret,processedframe1 = cv2.threshold(processedframe1,last_thresh_min,last_thresh_max,cv2.THRESH_BINARY)
+    orignal = processedframe1;
+
+    return resize_ratio,orignal;

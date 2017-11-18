@@ -27,3 +27,7 @@ def getFrame():
     else:
         helper.throwException("visual_input.py -> def getFrame -> ERROR : Frame is not accessed.");
 #end
+
+def getTemplateImage():
+    return cv2.imread("web_test_visual_output/sel_image.png", cv2.IMREAD_COLOR);
+#end

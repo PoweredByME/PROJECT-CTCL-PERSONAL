@@ -12,50 +12,35 @@ import cv2, helper, filters, imutils, ShapeDetector;
 import visual_input as vi;
 import visual_output as vo;
 import numpy as np;
-
+import cell_detect_via_contours as cdvc;
+import cell_detect_via_blob as cdvb;
 
 def main():
     
     #variables
-    resizedFrameWidth = 300;
-    cannyEdgeDetector_minVal = 90;
-    cannyEdgeDetector_maxVal = 200;
     orignal = frame = processedframe1 = processedframe = None;
 
     vi.getCamera();
     while True:
         # getting image
         helper.printDebugMsg(" > Getting Frame.");
-        frame = vi.getFrame();
+        orignal = frame = processedframe1 = processedframe = vi.getFrame();
+        template = vi.getTemplateImage();
 
-        #processing image
+
+        #proxessing frame
         helper.printDebugMsg(" > Processing Frame.");
-        orignal = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY);
-        orignal = filters.gaussianBlur(orignal);
-        orignal = cv2.adaptiveThreshold(orignal,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,2)
-        processedframe = cv2.Canny(filters.gaussianBlur(orignal),180,200);
-        orignal = processedframe1 = filters.avgFilter(processedframe, (29,29));
-        ret,processedframe1 = cv2.threshold(processedframe1,68,255,cv2.THRESH_BINARY)
-        cnts = cv2.findContours(processedframe1.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE);
-        cnts = cnts[0] if imutils.is_cv2() else cnts[1];
-        sd = ShapeDetector.ShapeDetector();
-        for c in cnts:
-    	    shape = sd.detect(c);
-            #cv2.drawContours(frame, [c], -1, (255, 255, 255), 2);
-            M = cv2.moments(c);
-            cY = cX = 0
-            try:
-                cX = int((M["m10"] / M["m00"]));
-                cY = int((M["m01"] / M["m00"]));
-            except:
-                pass;
-            if len(c) > 20:
-                cv2.circle(frame, (cX,cY), 6,(0,255,0),-1);
-                cv2.circle(frame, (cX,cY), int(np.linalg.norm((cX,cY)-max(c[0]))),(255,255,0),2);
-                print max(c[0]);
+        dim, w,h = template.shape[::-1]
 
-        processedframe1 = frame;
-        
+        template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY);
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY);
+        res = cv2.matchTemplate(frame,template,cv2.TM_SQDIFF);
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        top_left = min_loc;
+        bottom_right = (top_left[0] + w, top_left[1] + h)
+        cv2.rectangle(processedframe,top_left, bottom_right, 255, 2)
+
+
         #showing image
         helper.printDebugMsg(" > Showing Frame.");
         orignal = helper.convertToJPEG(orignal)
@@ -79,46 +64,45 @@ except ValueError as err:
 
 
 
-'''
+''' (x,y),radius = cv2.minEnclosingCircle(c)
+            center = (int(x * resize_ratio), int(y * resize_ratio));
+            radius = int(radius * resize_ratio);
+            if(radius > 70):
+                cv2.circle(frame, center, 6,(0,255,0),-1);
+                cv2.circle(frame, center, radius,(255,255,0),2);                
+
         orignal = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY);
-        im = resizedFrame = imutils.resize(orignal, width=resizedFrameWidth);
-        resize_ratio = frame.shape[0]/float(resizedFrame.shape[0]); print("resize_ratio = " + str(resize_ratio));
-        kernel = np.array([[-1,-1,-1], [-1,18,-1], [-1,-1,-1]])
-        im = cv2.filter2D(im, -1, kernel)
-        blurredFrame = filters.medianBlur(resizedFrame);
-        
-        processedframe = thresholdedFrame = cv2.Canny(blurredFrame,cannyEdgeDetector_minVal,cannyEdgeDetector_maxVal);
-        #circles = cv2.HoughCircles(thresholdedFrame,cv2.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=0,maxRadius=0)
+        orignal = filters.gaussianBlur(orignal);
+        orignal = cv2.adaptiveThreshold(orignal,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,2)
+        processedframe = cv2.Canny(filters.gaussianBlur(orignal),180,200);
+        orignal = processedframe1 = filters.avgFilter(processedframe, (29,29));
+        ret,processedframe1 = cv2.threshold(processedframe1,68,255,cv2.THRESH_BINARY)
         
 
-        cnts = cv2.findContours(thresholdedFrame.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE);
-        cnts = cnts[0] if imutils.is_cv2() else cnts[1];
-        sd = ShapeDetector.ShapeDetector();
-        for c in cnts:
-    	    shape = sd.detect(c);
-            c = c.astype("float");
-            c *= resize_ratio;
-            c = c.astype("int");
-            cv2.drawContours(frame, [c], -1, (255, 255, 255), 2);
+        # Setup SimpleBlobDetector parameters.
+        params = cv2.SimpleBlobDetector_Params()
+ 
+        # Filter by Area.
+        params.filterByArea = True
+        params.minArea = 100
+ 
+        # Filter by Circularity
+        params.filterByCircularity = True
+        params.minCircularity = 0.1
+ 
+ 
+        # Create a detector with the parameters
+        ver = (cv2.__version__).split('.')
+        if int(ver[0]) < 3 :
+            detector = cv2.SimpleBlobDetector(params)
+        else : 
+            detector = cv2.SimpleBlobDetector_create(params)
+
+        keypoints = detector.detect(frame);
+        print keypoints;
+        processedframe = cv2.drawKeypoints(orignal, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
 
         
-        processedframe1 = frame;
-        
-        circles = cv2.HoughCircles(orignal,cv2.HOUGH_GRADIENT,20,300,param1=50,param2=30,minRadius=0,maxRadius=300);
-        
-        try:
-            circles = np.uint16(np.around(circles))
-            for i in circles[0,:]:
-                resize_ratio = 1;
-                cv2.circle(frame,(i[0] * resize_ratio,i[1] * resize_ratio),i[2] * resize_ratio,(0,255,0),2)
-                cv2.circle(frame,(i[0] * resize_ratio,i[1] * resize_ratio),2,(0,0,255),3)
-                frame = processedframe1;
-        except:
-            pass;
-
-
-
-
         
 '''
